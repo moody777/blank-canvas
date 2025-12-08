@@ -4,7 +4,7 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getNewsEvents, getLeaveBalances, getMissions, getAttendanceRecords, getPersonalAttendanceTrends } from '@/lib/mockFunctions';
+import { getNewsEvents, getLeaveEntitlements, getMissions, getAttendanceRecords, getPersonalAttendanceTrends } from '@/lib/dataService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ClockInOutDialog } from '@/components/employee/ClockInOutDialog';
@@ -22,19 +22,20 @@ export const EmployeeDashboard = () => {
   const [reimbursementDialogOpen, setReimbursementDialogOpen] = useState(false);
 
   // Get user-specific data
-  const leaveBalances = getLeaveBalances();
+  const leaveEntitlements = getLeaveEntitlements();
   const missions = getMissions();
   const attendanceRecords = getAttendanceRecords();
   const newsEvents = getNewsEvents();
   const personalAttendanceTrends = getPersonalAttendanceTrends();
   
-  const userLeaveBalance = leaveBalances.find(lb => lb.employeeId === user?.id);
-  const userMissions = missions.filter(m => m.employeeId === user?.id && m.status !== 'COMPLETED' && m.status !== 'CANCELLED');
-  const userAttendance = attendanceRecords.filter(a => a.employeeId === user?.id);
+  const userId = user?.id ? parseInt(user.id) : 0;
+  const userLeaveBalance = leaveEntitlements.find(lb => lb.employee_id === userId);
+  const userMissions = missions.filter(m => m.employee_id === userId && m.status !== 'COMPLETED' && m.status !== 'CANCELLED');
+  const userAttendance = attendanceRecords.filter(a => a.employee_id === userId);
   const thisMonthAttendance = userAttendance.filter(a => 
-    a.entryTime && new Date(a.entryTime).getMonth() === new Date().getMonth()
+    a.entry_time && new Date(a.entry_time).getMonth() === new Date().getMonth()
   );
-  const presentDays = thisMonthAttendance.filter(a => a.loginMethod && true).length;
+  const presentDays = thisMonthAttendance.filter(a => a.login_method && true).length;
 
   return (
     <div className="space-y-6">
@@ -128,21 +129,21 @@ export const EmployeeDashboard = () => {
             {userMissions.length > 0 ? (
               userMissions.slice(0, 3).map((mission) => (
                 <div 
-                  key={mission.id} 
+                  key={mission.mission_id} 
                   className="flex items-center justify-between rounded-lg border p-3 cursor-pointer hover:bg-secondary/50 transition-colors"
-                  onClick={() => navigate(`/mission/${mission.id}`)}
+                  onClick={() => navigate(`/mission/${mission.mission_id}`)}
                 >
                   <div className="flex-1">
                     <div className="font-medium">{mission.destination}</div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(mission.startDate).toLocaleDateString()} - {new Date(mission.endDate).toLocaleDateString()}
+                      {mission.start_date ? new Date(mission.start_date).toLocaleDateString() : ''} - {mission.end_date ? new Date(mission.end_date).toLocaleDateString() : ''}
                     </div>
                   </div>
                   <Badge variant={
                     mission.status === 'COMPLETED' ? 'default' :
                     (mission.status === 'ASSIGNED' || mission.status === 'IN_PROGRESS') ? 'secondary' : 'outline'
                   }>
-                    {mission.status.toLowerCase()}
+                    {mission.status?.toLowerCase()}
                   </Badge>
                 </div>
               ))

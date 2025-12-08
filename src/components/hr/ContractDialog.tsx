@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getDepartments, getPositions, getProfiles } from '@/lib/mockFunctions';
-import { mockCreateContract, mockRenewContract } from '@/lib/mockFunctions';
+import { getDepartments, getPositions, getEmployees, createContract, renewContract } from '@/lib/dataService';
 import { useToast } from '@/hooks/use-toast';
 
 interface ContractDialogProps {
@@ -17,7 +16,7 @@ interface ContractDialogProps {
 
 export function ContractDialog({ open, onOpenChange, mode, contractId }: ContractDialogProps) {
   const { toast } = useToast();
-  const profiles = getProfiles();
+  const employees = getEmployees();
   const departments = getDepartments();
   const positions = getPositions();
   const [employeeId, setEmployeeId] = useState('');
@@ -28,27 +27,23 @@ export function ContractDialog({ open, onOpenChange, mode, contractId }: Contrac
   const [endDate, setEndDate] = useState('');
   const [salaryType, setSalaryType] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (mode === 'create') {
       if (!employeeId || !contractType || !departmentId || !positionId || !startDate) {
         toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
         return;
       }
-      mockCreateContract({
-        employeeId,
-        contractType,
-        departmentId,
-        positionId,
-        startDate,
-        endDate,
-        salaryType
+      await createContract({
+        type: contractType,
+        start_date: new Date(startDate),
+        end_date: endDate ? new Date(endDate) : undefined,
       });
     } else {
       if (!endDate) {
         toast({ title: 'Error', description: 'Please select new end date', variant: 'destructive' });
         return;
       }
-      mockRenewContract(contractId!, { endDate });
+      await renewContract(parseInt(contractId!), new Date(endDate));
     }
     
     onOpenChange(false);
@@ -81,9 +76,9 @@ export function ContractDialog({ open, onOpenChange, mode, contractId }: Contrac
                     <SelectValue placeholder="Select employee" />
                   </SelectTrigger>
                   <SelectContent>
-                    {profiles.map(profile => (
-                      <SelectItem key={profile.id} value={profile.id}>
-                        {profile.firstName} {profile.lastName}
+                    {employees.map(profile => (
+                      <SelectItem key={profile.employee_id} value={String(profile.employee_id)}>
+                        {profile.first_name} {profile.last_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -130,7 +125,7 @@ export function ContractDialog({ open, onOpenChange, mode, contractId }: Contrac
                     </SelectTrigger>
                     <SelectContent>
                       {departments.map(dept => (
-                        <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                        <SelectItem key={dept.department_id} value={String(dept.department_id)}>{dept.department_name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -144,7 +139,7 @@ export function ContractDialog({ open, onOpenChange, mode, contractId }: Contrac
                     </SelectTrigger>
                     <SelectContent>
                       {positions.map(pos => (
-                        <SelectItem key={pos.id} value={pos.id}>{pos.title}</SelectItem>
+                        <SelectItem key={pos.position_id} value={String(pos.position_id)}>{pos.position_title}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

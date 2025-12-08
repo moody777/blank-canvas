@@ -4,9 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
-import { getShifts } from '@/lib/mockFunctions';
-import { mockClockIn, mockClockOut, mockRecordMultiplePunches } from '@/lib/mockFunctions';
-import { getShiftName } from '@/lib/dataAdapters';
+import { getShiftSchedules, getShiftNameById, clockIn, clockOut } from '@/lib/dataService';
 import { useToast } from '@/hooks/use-toast';
 import { Clock, LogIn, LogOut } from 'lucide-react';
 
@@ -20,14 +18,15 @@ export function ClockInOutDialog({ open, onOpenChange, type }: ClockInOutDialogP
   const { user } = useAuth();
   const { toast } = useToast();
   const [shiftId, setShiftId] = useState('');
-  const shifts = getShifts();
+  const shifts = getShiftSchedules();
 
-  const handleClock = () => {
+  const handleClock = async () => {
+    const userId = user?.id ? parseInt(user.id) : 0;
     if (type === 'in') {
-      mockClockIn();
+      await clockIn(userId, shiftId ? parseInt(shiftId) : undefined);
       toast({ title: 'Clocked In', description: 'Your attendance has been recorded' });
     } else {
-      mockClockOut();
+      await clockOut(userId);
       toast({ title: 'Clocked Out', description: 'Your exit time has been recorded' });
     }
     onOpenChange(false);
@@ -60,10 +59,10 @@ export function ClockInOutDialog({ open, onOpenChange, type }: ClockInOutDialogP
                 </SelectTrigger>
                 <SelectContent>
                   {shifts.map(shift => {
-                    const shiftName = getShiftName(shift);
+                    const shiftName = getShiftNameById(shift.shift_id || 0);
                     return (
-                      <SelectItem key={shift.id} value={shift.id}>
-                        {shiftName} ({shift.startTime} - {shift.endTime})
+                      <SelectItem key={shift.shift_id} value={String(shift.shift_id)}>
+                        {shiftName} ({shift.start_time} - {shift.end_time})
                       </SelectItem>
                     );
                   })}

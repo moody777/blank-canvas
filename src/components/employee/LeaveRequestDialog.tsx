@@ -7,12 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { getLeaveTypes } from '@/lib/mockFunctions';
-import { mockSubmitLeaveRequest, mockAttachLeaveDocuments } from '@/lib/mockFunctions';
+import { getLeaveTypes, submitLeaveRequest } from '@/lib/dataService';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Upload } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LeaveRequestDialogProps {
   open: boolean;
@@ -21,6 +21,7 @@ interface LeaveRequestDialogProps {
 
 export function LeaveRequestDialog({ open, onOpenChange }: LeaveRequestDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const leaveTypes = getLeaveTypes();
   const [leaveTypeId, setLeaveTypeId] = useState('');
   const [startDate, setStartDate] = useState<Date>();
@@ -28,22 +29,20 @@ export function LeaveRequestDialog({ open, onOpenChange }: LeaveRequestDialogPro
   const [reason, setReason] = useState('');
   const [attachment, setAttachment] = useState<File | null>(null);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!leaveTypeId || !startDate || !endDate || !reason) {
       toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
       return;
     }
 
-    mockSubmitLeaveRequest({
-      leaveTypeId,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
+    const userId = user?.id ? parseInt(user.id) : 0;
+    await submitLeaveRequest({
+      employeeId: userId,
+      leaveTypeId: parseInt(leaveTypeId),
+      startDate,
+      endDate,
       reason
     });
-
-    if (attachment) {
-      mockAttachLeaveDocuments('leave-request-id', [attachment]);
-    }
 
     toast({ title: 'Leave Request Submitted', description: 'Your manager will review your request' });
     onOpenChange(false);
@@ -73,8 +72,8 @@ export function LeaveRequestDialog({ open, onOpenChange }: LeaveRequestDialogPro
               </SelectTrigger>
               <SelectContent>
                 {leaveTypes.map(type => (
-                  <SelectItem key={type.id} value={type.id}>
-                    {type.leaveType}
+                  <SelectItem key={type.leave_id} value={String(type.leave_id)}>
+                    {type.leave_type}
                   </SelectItem>
                 ))}
               </SelectContent>

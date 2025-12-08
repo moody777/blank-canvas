@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getDepartments, getPositions } from '@/lib/mockFunctions';
+import { getDepartments, getPositions, createEmployee } from '@/lib/dataService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface EmployeeCreationDialogProps {
@@ -48,7 +48,7 @@ export function EmployeeCreationDialog({ open, onOpenChange }: EmployeeCreationD
     role: 'employee',
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validate required fields
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.departmentId) {
       toast({
@@ -69,6 +69,25 @@ export function EmployeeCreationDialog({ open, onOpenChange }: EmployeeCreationD
     }
 
     // Create employee
+    await createEmployee({
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      national_id: formData.nationalId,
+      date_of_birth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined,
+      country_of_birth: formData.countryOfBirth,
+      address: formData.address,
+      biography: formData.biography,
+      emergency_contact_name: formData.emergencyContactName,
+      emergency_contact_phone: formData.emergencyContactPhone,
+      relationship: formData.emergencyRelationship,
+      department_id: parseInt(formData.departmentId),
+      position_id: formData.positionId ? parseInt(formData.positionId) : undefined,
+      hire_date: formData.hireDate ? new Date(formData.hireDate) : undefined,
+      employment_status: formData.employmentStatus,
+    });
+
     toast({
       title: 'Employee Created Successfully',
       description: `${formData.firstName} ${formData.lastName} has been added to the system.`,
@@ -265,7 +284,7 @@ export function EmployeeCreationDialog({ open, onOpenChange }: EmployeeCreationD
                 </SelectTrigger>
                 <SelectContent>
                   {departments.map(dept => (
-                    <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                    <SelectItem key={dept.department_id} value={String(dept.department_id)}>{dept.department_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -282,7 +301,7 @@ export function EmployeeCreationDialog({ open, onOpenChange }: EmployeeCreationD
                 </SelectTrigger>
                 <SelectContent>
                   {positions.map(pos => (
-                    <SelectItem key={pos.id} value={pos.id}>{pos.title}</SelectItem>
+                    <SelectItem key={pos.position_id} value={String(pos.position_id)}>{pos.position_title}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

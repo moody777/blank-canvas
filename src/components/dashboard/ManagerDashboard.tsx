@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getProfiles, getLeaveRequests, getMissions, getAttendanceRecords, getTeamPerformanceTrends } from '@/lib/mockFunctions';
+import { getEmployees, getLeaveRequests, getMissions, getAttendanceRecords, getTeamPerformanceTrends } from '@/lib/dataService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
@@ -14,28 +14,30 @@ export const ManagerDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const profiles = getProfiles();
+  const employees = getEmployees();
   const leaveRequests = getLeaveRequests();
   const missions = getMissions();
   const attendanceRecords = getAttendanceRecords();
   const teamPerformanceTrends = getTeamPerformanceTrends();
 
+  const userId = user?.id ? parseInt(user.id) : 0;
+  
   // Get team members (those who report to this manager)
-  const teamMembers = profiles.filter(p => p.managerId === user?.id);
-  const teamMemberIds = teamMembers.map(tm => tm.id);
+  const teamMembers = employees.filter(p => p.manager_id === userId);
+  const teamMemberIds = teamMembers.map(tm => tm.employee_id);
 
   // Team-related metrics
   const pendingLeaveRequests = leaveRequests.filter(
-    lr => teamMemberIds.includes(lr.employeeId) && lr.status === 'PENDING'
+    lr => teamMemberIds.includes(lr.employee_id) && lr.status === 'PENDING'
   );
   
   const teamMissions = missions.filter(
-    m => teamMemberIds.includes(m.employeeId) && m.status !== 'COMPLETED'
+    m => teamMemberIds.includes(m.employee_id) && m.status !== 'COMPLETED'
   );
 
   const todayAttendance = attendanceRecords.filter(a =>
-    teamMemberIds.includes(a.employeeId) && 
-    a.entryTime && new Date(a.entryTime).toDateString() === new Date().toDateString()
+    teamMemberIds.includes(a.employee_id) && 
+    a.entry_time && new Date(a.entry_time).toDateString() === new Date().toDateString()
   );
   const presentToday = todayAttendance.length;
 
@@ -130,22 +132,22 @@ export const ManagerDashboard = () => {
           <CardContent className="space-y-3">
             {pendingLeaveRequests.length > 0 ? (
               pendingLeaveRequests.slice(0, 4).map((request) => {
-                const employee = profiles.find(p => p.id === request.employeeId);
+                const employee = employees.find(p => p.employee_id === request.employee_id);
                 return (
-                  <div key={request.id} className="flex items-center justify-between rounded-lg border p-3">
+                  <div key={request.request_id} className="flex items-center justify-between rounded-lg border p-3">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={employee?.profileImage} />
+                        <AvatarImage src={employee?.profile_image} />
                         <AvatarFallback>
-                          {employee?.firstName[0]}{employee?.lastName[0]}
+                          {employee?.first_name?.[0]}{employee?.last_name?.[0]}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="font-medium text-sm">
-                          {employee?.firstName} {employee?.lastName}
+                          {employee?.first_name} {employee?.last_name}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+                          {request.start_date ? new Date(request.start_date).toLocaleDateString() : ''} - {request.end_date ? new Date(request.end_date).toLocaleDateString() : ''}
                         </div>
                       </div>
                     </div>
@@ -171,19 +173,19 @@ export const ManagerDashboard = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             {teamMembers.slice(0, 6).map((member) => {
-              const attendance = todayAttendance.find(a => a.employeeId === member.id);
+              const attendance = todayAttendance.find(a => a.employee_id === member.employee_id);
               return (
-                <div key={member.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div key={member.employee_id} className="flex items-center justify-between rounded-lg border p-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={member.profileImage} />
+                      <AvatarImage src={member.profile_image} />
                       <AvatarFallback>
-                        {member.firstName[0]}{member.lastName[0]}
+                        {member.first_name?.[0]}{member.last_name?.[0]}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-medium">
-                        {member.firstName} {member.lastName}
+                        {member.first_name} {member.last_name}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         FULL-TIME

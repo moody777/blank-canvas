@@ -3,9 +3,8 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getPayrollRecords, getProfiles, getPayrollTrends } from '@/lib/mockFunctions';
+import { getPayrollRecords, getEmployees, getPayrollTrends, processPayroll, generateReport } from '@/lib/dataService';
 import { useNavigate } from 'react-router-dom';
-import { mockProcessPayroll, mockGenerateReport, mockGeneratePayroll } from '@/lib/mockFunctions';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 
@@ -13,14 +12,17 @@ export const PayrollDashboard = () => {
   const navigate = useNavigate();
 
   const payrollRecords = getPayrollRecords();
-  const profiles = getProfiles();
+  const employees = getEmployees();
   const payrollTrends = getPayrollTrends();
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const thisMonthPayroll = payrollRecords.filter(pr => pr.periodStart.slice(0, 7) === currentMonth);
+  const thisMonthPayroll = payrollRecords.filter(pr => {
+    const periodStart = pr.period_start ? new Date(pr.period_start).toISOString().slice(0, 7) : '';
+    return periodStart === currentMonth;
+  });
   const processedPayroll = thisMonthPayroll.filter(pr => pr.status === 'PROCESSED');
   const draftPayroll = thisMonthPayroll.filter(pr => pr.status === 'CREATED');
-  const totalPayroll = thisMonthPayroll.reduce((sum, pr) => sum + pr.netSalary, 0);
+  const totalPayroll = thisMonthPayroll.reduce((sum, pr) => sum + (pr.net_salary || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -34,7 +36,7 @@ export const PayrollDashboard = () => {
             <Button onClick={() => navigate('/payroll/run')}>
               Go to Payroll Center
             </Button>
-            <Button variant="outline" onClick={() => mockGeneratePayroll(currentMonth)}>
+            <Button variant="outline" onClick={() => processPayroll(currentMonth)}>
               Process Current Period
             </Button>
           </div>
@@ -63,7 +65,7 @@ export const PayrollDashboard = () => {
         />
         <MetricCard 
           label="Total Employees" 
-          value={profiles.length} 
+          value={employees.length} 
           icon={Users} 
           color="blue" 
         />
@@ -80,22 +82,22 @@ export const PayrollDashboard = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             {thisMonthPayroll.slice(0, 5).map((record) => {
-              const employee = profiles.find(p => p.id === record.employeeId);
+              const employee = employees.find(p => p.employee_id === record.employee_id);
               return (
-                <div key={record.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div key={record.payroll_id} className="flex items-center justify-between rounded-lg border p-3">
                   <div className="flex-1">
                     <div className="font-medium text-sm">
-                      {employee?.firstName} {employee?.lastName}
+                      {employee?.first_name} {employee?.last_name}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Net: ${record.netSalary.toLocaleString()}
+                      Net: ${(record.net_salary || 0).toLocaleString()}
                     </div>
                   </div>
                   <Badge variant={
                     record.status === 'PAID' ? 'default' :
                     record.status === 'PROCESSED' ? 'secondary' : 'outline'
                   }>
-                    {record.status.toLowerCase()}
+                    {record.status?.toLowerCase()}
                   </Badge>
                 </div>
               );
@@ -182,7 +184,7 @@ export const PayrollDashboard = () => {
             <Button 
               variant="outline" 
               className="h-24 flex flex-col gap-2"
-              onClick={() => mockGenerateReport('Payroll Report')}
+              onClick={() => generateReport('Payroll Report')}
             >
               <AlertCircle className="h-6 w-6" />
               <span className="text-sm">Generate Report</span>
