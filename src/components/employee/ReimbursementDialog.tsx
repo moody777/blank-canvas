@@ -5,9 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { mockSubmitReimbursement } from '@/lib/mockFunctions';
+import { employeeClient } from '@/lib/client';
 import { useToast } from '@/hooks/use-toast';
 import { DollarSign } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ReimbursementDialogProps {
   open: boolean;
@@ -16,22 +17,32 @@ interface ReimbursementDialogProps {
 
 export function ReimbursementDialog({ open, onOpenChange }: ReimbursementDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [expenseType, setExpenseType] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
   const [receipt, setReceipt] = useState<File | null>(null);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!expenseType || !amount || !date || !description) {
       toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
       return;
     }
 
-    mockSubmitReimbursement(expenseType, amount, description);
-    toast({ title: 'Reimbursement Submitted', description: 'Your claim will be reviewed by HR' });
-    onOpenChange(false);
-    resetForm();
+    try {
+      const employeeId = user?.employeeId ? parseInt(user.employeeId) : undefined;
+      await employeeClient.submitReimbursement(
+        employeeId,
+        expenseType,
+        parseFloat(amount)
+      );
+      toast({ title: 'Reimbursement Submitted', description: 'Your claim will be reviewed by HR' });
+      onOpenChange(false);
+      resetForm();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to submit reimbursement', variant: 'destructive' });
+    }
   };
 
   const resetForm = () => {

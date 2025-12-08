@@ -4,16 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockConfigureOvertimeRules } from '@/lib/mockFunctions';
+import { payrollClient } from '@/lib/client';
 import { toast } from 'sonner';
 
 interface OvertimeRuleDialogProps {
   trigger: React.ReactNode;
-  initialData?: {
-    dayType: string;
-    multiplier: number;
-    maxHours?: number;
-  };
+  initialData?: { dayType: string; multiplier: number; maxHours?: number };
 }
 
 export const OvertimeRuleDialog = ({ trigger, initialData }: OvertimeRuleDialogProps) => {
@@ -22,15 +18,15 @@ export const OvertimeRuleDialog = ({ trigger, initialData }: OvertimeRuleDialogP
   const [multiplier, setMultiplier] = useState(initialData?.multiplier.toString() || '');
   const [maxHours, setMaxHours] = useState(initialData?.maxHours?.toString() || '');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    mockConfigureOvertimeRules({
-      dayType,
-      multiplier: parseFloat(multiplier),
-      maxHours: maxHours ? parseInt(maxHours) : undefined
-    });
-    toast.success(`Overtime rule ${initialData ? 'updated' : 'created'} successfully`);
-    setOpen(false);
+    try {
+      await payrollClient.configureOvertimeRules(dayType, parseFloat(multiplier), maxHours ? parseInt(maxHours) : undefined);
+      toast.success(`Overtime rule ${initialData ? 'updated' : 'created'} successfully`);
+      setOpen(false);
+    } catch (error) {
+      toast.error('Failed to save overtime rule');
+    }
   };
 
   return (
@@ -44,9 +40,7 @@ export const OvertimeRuleDialog = ({ trigger, initialData }: OvertimeRuleDialogP
           <div className="space-y-2">
             <Label htmlFor="dayType">Day Type</Label>
             <Select value={dayType} onValueChange={setDayType} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select day type" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select day type" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="weekday">Weekday</SelectItem>
                 <SelectItem value="weekend">Weekend</SelectItem>
@@ -54,37 +48,16 @@ export const OvertimeRuleDialog = ({ trigger, initialData }: OvertimeRuleDialogP
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="multiplier">Pay Multiplier</Label>
-            <Input
-              id="multiplier"
-              type="number"
-              step="0.1"
-              value={multiplier}
-              onChange={(e) => setMultiplier(e.target.value)}
-              placeholder="1.5"
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              e.g., 1.5 = time and a half, 2.0 = double time
-            </p>
+            <Input id="multiplier" type="number" step="0.1" value={multiplier} onChange={(e) => setMultiplier(e.target.value)} placeholder="1.5" required />
+            <p className="text-xs text-muted-foreground">e.g., 1.5 = time and a half, 2.0 = double time</p>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="maxHours">Max Hours (Optional)</Label>
-            <Input
-              id="maxHours"
-              type="number"
-              value={maxHours}
-              onChange={(e) => setMaxHours(e.target.value)}
-              placeholder="Leave empty for unlimited"
-            />
+            <Input id="maxHours" type="number" value={maxHours} onChange={(e) => setMaxHours(e.target.value)} placeholder="Leave empty for unlimited" />
           </div>
-
-          <Button type="submit" className="w-full">
-            {initialData ? 'Update' : 'Create'} Rule
-          </Button>
+          <Button type="submit" className="w-full">{initialData ? 'Update' : 'Create'} Rule</Button>
         </form>
       </DialogContent>
     </Dialog>

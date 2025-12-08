@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AssignMission } from '@/lib/mockFunctions';
-import { getProfiles } from '@/lib/mockFunctions';
-import { getEmployeeName } from '@/lib/dataAdapters';
+import { hrClient } from '@/lib/client';
+import type { Employee } from '@/types';
 import { Plane } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface FullMissionAssignDialogProps {
   open: boolean;
@@ -27,30 +27,49 @@ export default function FullMissionAssignDialog({ open, onOpenChange }: FullMiss
   const [currency, setCurrency] = useState('USD');
   const [accommodation, setAccommodation] = useState('');
   const [transportation, setTransportation] = useState('');
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
-  const profiles = getProfiles();
-  const managers = profiles.filter(p => p.managerId);
+  useEffect(() => {
+    if (open) {
+      hrClient.getEmployeeDirectory().then(setEmployees).catch(console.error);
+    }
+  }, [open]);
 
-  const handleSubmit = () => {
+  const managers = employees.filter(e => e.manager_id);
+
+  const handleSubmit = async () => {
     if (!employeeId || !managerId || !destination || !startDate || !endDate) {
+      toast.error('Please fill all required fields');
       return;
     }
 
-    AssignMission(employeeId, managerId, destination, startDate, endDate);
+    try {
+      await hrClient.assignMission(
+        parseInt(employeeId),
+        parseInt(managerId),
+        destination,
+        new Date(startDate),
+        new Date(endDate)
+      );
 
-    // Reset form
-    setEmployeeId('');
-    setManagerId('');
-    setDestination('');
-    setPurpose('');
-    setDescription('');
-    setStartDate('');
-    setEndDate('');
-    setBudget('');
-    setCurrency('USD');
-    setAccommodation('');
-    setTransportation('');
-    onOpenChange(false);
+      toast.success('Mission assigned successfully');
+      
+      // Reset form
+      setEmployeeId('');
+      setManagerId('');
+      setDestination('');
+      setPurpose('');
+      setDescription('');
+      setStartDate('');
+      setEndDate('');
+      setBudget('');
+      setCurrency('USD');
+      setAccommodation('');
+      setTransportation('');
+      onOpenChange(false);
+    } catch (error) {
+      toast.error('Failed to assign mission');
+    }
   };
 
   return (
@@ -68,9 +87,9 @@ export default function FullMissionAssignDialog({ open, onOpenChange }: FullMiss
                   <SelectValue placeholder="Select employee" />
                 </SelectTrigger>
                 <SelectContent>
-                  {profiles.map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {getEmployeeName(profile)}
+                  {employees.map((employee) => (
+                    <SelectItem key={employee.employee_id} value={String(employee.employee_id)}>
+                      {employee.full_name || `${employee.first_name} ${employee.last_name}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -85,8 +104,8 @@ export default function FullMissionAssignDialog({ open, onOpenChange }: FullMiss
                 </SelectTrigger>
                 <SelectContent>
                   {managers.map((manager) => (
-                    <SelectItem key={manager.id} value={manager.id}>
-                      {getEmployeeName(manager)}
+                    <SelectItem key={manager.employee_id} value={String(manager.employee_id)}>
+                      {manager.full_name || `${manager.first_name} ${manager.last_name}`}
                     </SelectItem>
                   ))}
                 </SelectContent>

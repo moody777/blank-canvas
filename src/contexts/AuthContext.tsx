@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User, UserRole } from '@/types';
-import { getUsers } from '@/lib/mockFunctions';
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
 
 interface AuthContextType {
@@ -13,13 +12,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Demo users for testing
+const demoUsers: User[] = [
+  { id: '1', username: 'admin', email: 'admin@hrms.com', roles: ['hr_admin', 'system_admin'], employeeId: '1' },
+  { id: '2', username: 'manager', email: 'manager@hrms.com', roles: ['line_manager'], employeeId: '2' },
+  { id: '3', username: 'employee', email: 'employee@hrms.com', roles: ['employee'], employeeId: '3' },
+  { id: '4', username: 'payroll', email: 'payroll@hrms.com', roles: ['payroll_specialist'], employeeId: '4' },
+];
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [authType, setAuthType] = useState<'local' | 'msal' | null>(null);
   const { instance, accounts } = useMsal();
   const isMsalAuthenticated = useIsAuthenticated();
 
-  // Restore local user from storage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('hrms_user');
     const storedAuthType = localStorage.getItem('hrms_auth_type');
@@ -29,7 +35,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Sync MSAL user to local state (only if not locally authenticated)
   useEffect(() => {
     if (isMsalAuthenticated && accounts.length > 0 && authType !== 'local') {
       const msalAccount = accounts[0];
@@ -48,8 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isMsalAuthenticated, accounts, authType]);
 
   const login = useCallback(async (username: string, _password: string): Promise<boolean> => {
-    // Find demo user
-    const foundUser = getUsers().find(u => u.username === username);
+    const foundUser = demoUsers.find(u => u.username === username);
     if (foundUser) {
       setUser(foundUser);
       setAuthType('local');
@@ -62,18 +66,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(() => {
     const wasAuthType = authType;
-    
-    // Clear local state and storage
     setUser(null);
     setAuthType(null);
     localStorage.removeItem('hrms_user');
     localStorage.removeItem('hrms_auth_type');
-    
-    // If logged in via MSAL, also logout from Microsoft
     if (wasAuthType === 'msal' || isMsalAuthenticated) {
-      instance.logoutPopup().catch(e => {
-        console.error("MSAL logout failed:", e);
-      });
+      instance.logoutPopup().catch(e => console.error("MSAL logout failed:", e));
     }
   }, [authType, isMsalAuthenticated, instance]);
 
@@ -85,13 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAuthenticated = !!user || isMsalAuthenticated;
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      hasRole,
-      isAuthenticated
-    }}>
+    <AuthContext.Provider value={{ user, login, logout, hasRole, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
@@ -99,8 +91,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
