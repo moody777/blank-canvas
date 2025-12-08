@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { mockAddManagerNotes } from '@/lib/mockFunctions';
+import { managerClient } from '@/lib/client';
 import { toast } from 'sonner';
 
 interface ManagerNoteDialogProps {
@@ -25,7 +25,7 @@ export function ManagerNoteDialog({ open, onOpenChange, employeeId, employeeName
     }
 
     try {
-      await mockAddManagerNotes(employeeId, note, isPrivate);
+      await managerClient.addManagerNotes(parseInt(employeeId), note, isPrivate);
       toast.success('Note added successfully');
       onOpenChange(false);
       setNote('');
@@ -41,18 +41,11 @@ export function ManagerNoteDialog({ open, onOpenChange, employeeId, employeeName
         <DialogHeader>
           <DialogTitle>Add Manager Note - {employeeName}</DialogTitle>
         </DialogHeader>
-        
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Note</Label>
-            <Textarea
-              placeholder="Enter your note about this employee..."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={5}
-            />
+            <Textarea placeholder="Enter your note about this employee..." value={note} onChange={(e) => setNote(e.target.value)} rows={5} />
           </div>
-
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Private Note</Label>
@@ -61,7 +54,6 @@ export function ManagerNoteDialog({ open, onOpenChange, employeeId, employeeName
             <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
           </div>
         </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSubmit}>Add Note</Button>

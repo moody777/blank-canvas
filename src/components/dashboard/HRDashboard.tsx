@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getNewsEvents } from '@/lib/mockFunctions';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useNavigate } from 'react-router-dom';
@@ -26,6 +25,13 @@ export const HRDashboard = () => {
     { name: 'Francis Degas', location: 'USA', role: 'Front End Developer', avatar: '/placeholder.svg' },
     { name: 'Leonora Carington', location: 'USA', role: 'Product Manager', avatar: '/placeholder.svg' },
     { name: 'Andrew Hunt', location: 'India', role: 'Creative Lead', avatar: '/placeholder.svg' },
+  ];
+
+  const newsEvents = [
+    { id: 1, title: 'Company Town Hall', description: 'Annual company-wide meeting', date: new Date().toISOString(), type: 'event' },
+    { id: 2, title: 'New Policy Update', description: 'Remote work policy changes', date: new Date().toISOString(), type: 'announcement' },
+    { id: 3, title: 'Team Building', description: 'Quarterly team outing', date: new Date().toISOString(), type: 'event' },
+    { id: 4, title: 'Training Session', description: 'Leadership development workshop', date: new Date().toISOString(), type: 'training' },
   ];
 
   const quickActions = [
@@ -121,7 +127,7 @@ export const HRDashboard = () => {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {getNewsEvents().slice(0, 4).map((event) => (
+            {newsEvents.slice(0, 4).map((event) => (
               <div key={event.id} className="flex items-start gap-3">
                 <div className="flex h-12 w-12 flex-col items-center justify-center rounded-lg bg-secondary text-xs">
                   <div className="font-semibold">{new Date(event.date).getDate()}</div>

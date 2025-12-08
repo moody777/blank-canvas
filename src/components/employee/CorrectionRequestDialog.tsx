@@ -5,9 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { mockSubmitCorrectionRequest } from '@/lib/mockFunctions';
+import { employeeClient } from '@/lib/client';
 import { useToast } from '@/hooks/use-toast';
 import { AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CorrectionRequestDialogProps {
   open: boolean;
@@ -16,22 +17,33 @@ interface CorrectionRequestDialogProps {
 
 export function CorrectionRequestDialog({ open, onOpenChange }: CorrectionRequestDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [correctionType, setCorrectionType] = useState('');
   const [date, setDate] = useState('');
   const [originalTime, setOriginalTime] = useState('');
   const [correctedTime, setCorrectedTime] = useState('');
   const [reason, setReason] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!correctionType || !date || !reason) {
       toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
       return;
     }
 
-    mockSubmitCorrectionRequest(correctionType, reason);
-    toast({ title: 'Correction Request Submitted', description: 'Your manager will review your request' });
-    onOpenChange(false);
-    resetForm();
+    try {
+      const employeeId = user?.employeeId ? parseInt(user.employeeId) : undefined;
+      await employeeClient.submitCorrectionRequest(
+        employeeId,
+        new Date(date),
+        correctionType,
+        reason
+      );
+      toast({ title: 'Correction Request Submitted', description: 'Your manager will review your request' });
+      onOpenChange(false);
+      resetForm();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to submit correction request', variant: 'destructive' });
+    }
   };
 
   const resetForm = () => {

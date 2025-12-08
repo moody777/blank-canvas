@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { mockEditDepartment } from '@/lib/mockFunctions';
+import { hrClient } from '@/lib/client';
 import { toast } from '@/hooks/use-toast';
 
 interface Department {
@@ -51,7 +51,12 @@ export function DepartmentUpdateDialog({
     setIsSubmitting(true);
     
     try {
-      await mockEditDepartment(department.id);
+      await hrClient.updateDepartment(
+        parseInt(department.id),
+        name,
+        purpose,
+        department.managerId ? parseInt(department.managerId) : undefined
+      );
       
       toast({
         title: "Success",

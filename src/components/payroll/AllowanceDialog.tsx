@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { mockConfigureShiftAllowances } from '@/lib/mockFunctions';
+import { payrollClient } from '@/lib/client';
 import { toast } from 'sonner';
 
 interface AllowanceDialogProps {
@@ -19,20 +19,19 @@ export const AllowanceDialog = ({ trigger }: AllowanceDialogProps) => {
   const [description, setDescription] = useState('');
   const [active, setActive] = useState(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    mockConfigureShiftAllowances({
-      name,
-      percentage: parseFloat(percentage),
-      description,
-      active
-    });
-    toast.success('Shift allowance created successfully');
-    setOpen(false);
-    setName('');
-    setPercentage('');
-    setDescription('');
-    setActive(true);
+    try {
+      await payrollClient.configureShiftAllowances(name, parseFloat(percentage));
+      toast.success('Shift allowance created successfully');
+      setOpen(false);
+      setName('');
+      setPercentage('');
+      setDescription('');
+      setActive(true);
+    } catch (error) {
+      toast.error('Failed to create allowance');
+    }
   };
 
   return (
@@ -45,48 +44,20 @@ export const AllowanceDialog = ({ trigger }: AllowanceDialogProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Allowance Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Night Shift Allowance"
-              required
-            />
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Night Shift Allowance" required />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="percentage">Percentage (%)</Label>
-            <Input
-              id="percentage"
-              type="number"
-              step="0.1"
-              value={percentage}
-              onChange={(e) => setPercentage(e.target.value)}
-              placeholder="20"
-              required
-            />
+            <Input id="percentage" type="number" step="0.1" value={percentage} onChange={(e) => setPercentage(e.target.value)} placeholder="20" required />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Additional pay for night shifts"
-              required
-            />
+            <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Additional pay for night shifts" required />
           </div>
-
           <div className="flex items-center justify-between">
             <Label htmlFor="active">Active</Label>
-            <Switch
-              id="active"
-              checked={active}
-              onCheckedChange={setActive}
-            />
+            <Switch id="active" checked={active} onCheckedChange={setActive} />
           </div>
-
           <Button type="submit" className="w-full">Create Allowance</Button>
         </form>
       </DialogContent>

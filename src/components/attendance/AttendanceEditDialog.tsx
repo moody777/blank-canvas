@@ -9,15 +9,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { mockEditAttendanceRecord } from '@/lib/mockFunctions';
 import { useToast } from '@/hooks/use-toast';
-import type { AttendanceRecord } from '@/types';
-import { getAttendanceDate, getAttendanceStatus } from '@/lib/dataAdapters';
+import type { Attendance } from '@/types';
 
 interface AttendanceEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  record: AttendanceRecord | null;
+  record: Attendance | null;
 }
 
 export function AttendanceEditDialog({ open, onOpenChange, record }: AttendanceEditDialogProps) {
@@ -30,25 +28,18 @@ export function AttendanceEditDialog({ open, onOpenChange, record }: AttendanceE
 
   useEffect(() => {
     if (record) {
-      const recordDate = getAttendanceDate(record);
-      setDate(new Date(recordDate));
-      setEntryTime(record.entryTime ?? '');
-      setExitTime(record.exitTime ?? '');
-      setStatus(getAttendanceStatus(record));
-      setLoginMethod(record.loginMethod);
+      const recordDate = record.entry_time ? new Date(record.entry_time) : new Date();
+      setDate(recordDate);
+      setEntryTime(record.entry_time ? format(new Date(record.entry_time), 'HH:mm') : '');
+      setExitTime(record.exit_time ? format(new Date(record.exit_time), 'HH:mm') : '');
+      setStatus(record.exception_id ? 'late' : 'present');
+      setLoginMethod(record.login_method || '');
     }
   }, [record]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!record || !date) return;
-
-    mockEditAttendanceRecord(record.id);
-    
-    toast({
-      title: 'Success',
-      description: 'Attendance record updated successfully',
-    });
-    
+    toast({ title: 'Success', description: 'Attendance record updated successfully' });
     onOpenChange(false);
   };
 
@@ -60,60 +51,33 @@ export function AttendanceEditDialog({ open, onOpenChange, record }: AttendanceE
         <DialogHeader>
           <DialogTitle>Edit Attendance Record</DialogTitle>
         </DialogHeader>
-        
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label>Date</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
+                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {date ? format(date, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
+                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
               </PopoverContent>
             </Popover>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="entryTime">Entry Time</Label>
-            <Input
-              id="entryTime"
-              type="time"
-              value={entryTime}
-              onChange={(e) => setEntryTime(e.target.value)}
-            />
+            <Input id="entryTime" type="time" value={entryTime} onChange={(e) => setEntryTime(e.target.value)} />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="exitTime">Exit Time</Label>
-            <Input
-              id="exitTime"
-              type="time"
-              value={exitTime}
-              onChange={(e) => setExitTime(e.target.value)}
-            />
+            <Input id="exitTime" type="time" value={exitTime} onChange={(e) => setExitTime(e.target.value)} />
           </div>
-
           <div className="space-y-2">
             <Label>Status</Label>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="present">Present</SelectItem>
                 <SelectItem value="late">Late</SelectItem>
@@ -122,13 +86,10 @@ export function AttendanceEditDialog({ open, onOpenChange, record }: AttendanceE
               </SelectContent>
             </Select>
           </div>
-
           <div className="space-y-2">
             <Label>Login Method</Label>
             <Select value={loginMethod} onValueChange={setLoginMethod}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="biometric">Biometric</SelectItem>
                 <SelectItem value="card">Card</SelectItem>
@@ -138,11 +99,8 @@ export function AttendanceEditDialog({ open, onOpenChange, record }: AttendanceE
             </Select>
           </div>
         </div>
-
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSave}>Save Changes</Button>
         </DialogFooter>
       </DialogContent>

@@ -7853,4 +7853,19 @@ function isAxiosError(obj: any): obj is AxiosError {
     return obj && obj.isAxiosError === true;
 }
 
+// API Base URL - can be configured via environment variable
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7140';
+
+// Singleton client instances
+export const employeeClient = new EmployeeClient(API_BASE_URL);
+export const hrClient = new HRClient(API_BASE_URL);
+export const managerClient = new ManagerClient(API_BASE_URL);
+export const payrollClient = new PayrollClient(API_BASE_URL);
+export const adminClient = new AdminClient(API_BASE_URL);
+
+// Helper to extract text from FileResponse blob
+export async function parseFileResponse(response: FileResponse): Promise<string> {
+    if (!response.data) return '';
+    return await response.data.text();
+}
 
