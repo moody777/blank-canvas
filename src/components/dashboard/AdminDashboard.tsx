@@ -2,7 +2,7 @@ import { Users, Settings, Shield, Database } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getProfiles, getDepartments, getShifts, getLeaveTypes, getSystemActivityTrends } from '@/lib/mockFunctions';
+import { getEmployees, getDepartments, getShiftSchedules, getLeaveTypes, getSystemActivityTrends } from '@/lib/dataService';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
@@ -10,13 +10,13 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLe
 export const AdminDashboard = () => {
   const navigate = useNavigate();
   
-  const profiles = getProfiles();
+  const employees = getEmployees();
   const departments = getDepartments();
-  const shifts = getShifts();
+  const shifts = getShiftSchedules();
   const leaveTypes = getLeaveTypes();
   const systemActivityTrends = getSystemActivityTrends();
 
-  const activeEmployees = profiles.filter(p => p.employmentStatus === 'ACTIVE').length;
+  const activeEmployees = employees.filter(p => p.employment_status === 'ACTIVE').length;
   const activeDepartments = departments.length;
   const activeShifts = shifts.filter(s => s.status === 'ACTIVE').length;
 
@@ -36,7 +36,7 @@ export const AdminDashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard 
           label="Total Users" 
-          value={profiles.length} 
+          value={employees.length} 
           icon={Users} 
           color="purple" 
         />
@@ -113,7 +113,7 @@ export const AdminDashboard = () => {
                 </div>
                 <div>
                   <div className="font-medium">Employee Management</div>
-                  <div className="text-sm text-muted-foreground">{profiles.length} total employees</div>
+                  <div className="text-sm text-muted-foreground">{employees.length} total employees</div>
                 </div>
               </div>
             </div>

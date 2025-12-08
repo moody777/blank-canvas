@@ -786,3 +786,89 @@ export interface FileResponse {
     fileName?: string;
     headers?: { [name: string]: any };
 }
+
+// Legacy types for backward compatibility
+export type User = {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
+  employeeId?: string;
+};
+
+export type UserRole = 'employee' | 'line_manager' | 'hr_admin' | 'payroll_specialist' | 'system_admin';
+
+export type AttendanceRecord = Attendance;
+export type PayrollRecord = Payroll;
+export type LeavePolicy = {
+  id: string;
+  name: string;
+  purpose: string;
+  eligibilityRules: string;
+  noticePeriod: number;
+  specialLeaveType: string;
+  resetOnNewYear: boolean;
+  yearStart: string;
+  yearEnd: string;
+};
+
+export type InsurancePlan = {
+  id: string;
+  type: string;
+  contributionRate: number;
+  coverage: string;
+};
+
+export type NewsEvent = {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+};
+
+export type EmployeeSkill = Employee_Skill;
+export type EmployeeRole = Employee_Role;
+export type EmployeeNotification = Employee_Notification;
+
+export type Job = {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  status: string;
+  postedDate: string;
+  description: string;
+};
+
+export type JobApplication = {
+  id: string;
+  jobId: string;
+  applicantName: string;
+  email: string;
+  status: string;
+  appliedDate: string;
+};
+
+export type InterviewStage = {
+  id: string;
+  applicationId: string;
+  stage: string;
+  scheduledDate: string;
+  status: string;
+};
+
+export type JobOffer = {
+  id: string;
+  applicationId: string;
+  salary: number;
+  startDate: string;
+  status: string;
+};
+
+export type EmployeeVerification = {
+  employeeId: string;
+  verificationId: string;
+  status: string;
+};

@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getProfiles, getDepartments, getPositions } from '@/lib/mockFunctions';
-import { mockUpdateEmployeeInfo } from '@/lib/mockFunctions';
+import { getEmployees, getDepartments, getPositions, updateEmployee } from '@/lib/dataService';
 
 interface EmployeeEditDialogProps {
   open: boolean;
@@ -14,10 +13,10 @@ interface EmployeeEditDialogProps {
 }
 
 export function EmployeeEditDialog({ open, onOpenChange, employeeId }: EmployeeEditDialogProps) {
-  const profiles = getProfiles();
+  const employees = getEmployees();
   const departments = getDepartments();
   const positions = getPositions();
-  const profile = profiles.find(p => p.id === employeeId);
+  const profile = employees.find(p => p.employee_id === parseInt(employeeId));
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -33,21 +32,29 @@ export function EmployeeEditDialog({ open, onOpenChange, employeeId }: EmployeeE
   useEffect(() => {
     if (profile) {
       setFormData({
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        email: profile.email,
-        phone: profile.phone,
-        departmentId: profile.departmentId,
-        positionId: profile.positionId,
-        status: profile.employmentStatus?.toLowerCase() || 'active',
-        contractType: 'full-time', // Contract type is stored in Contract table
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        departmentId: String(profile.department_id || ''),
+        positionId: String(profile.position_id || ''),
+        status: profile.employment_status?.toLowerCase() || 'active',
+        contractType: 'full-time',
       });
     }
   }, [profile]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    mockUpdateEmployeeInfo(employeeId, formData);
+    await updateEmployee(parseInt(employeeId), {
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      department_id: parseInt(formData.departmentId),
+      position_id: parseInt(formData.positionId),
+      employment_status: formData.status.toUpperCase(),
+    });
     onOpenChange(false);
   };
 
@@ -111,7 +118,7 @@ export function EmployeeEditDialog({ open, onOpenChange, employeeId }: EmployeeE
                 </SelectTrigger>
                 <SelectContent>
                   {departments.map(dept => (
-                    <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                    <SelectItem key={dept.department_id} value={String(dept.department_id)}>{dept.department_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -124,7 +131,7 @@ export function EmployeeEditDialog({ open, onOpenChange, employeeId }: EmployeeE
                 </SelectTrigger>
                 <SelectContent>
                   {positions.map(pos => (
-                    <SelectItem key={pos.id} value={pos.id}>{pos.title}</SelectItem>
+                    <SelectItem key={pos.position_id} value={String(pos.position_id)}>{pos.position_title}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -5,9 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getDepartments, getProfiles } from '@/lib/mockFunctions';
+import { getDepartments, getEmployees } from '@/lib/dataService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowRight, Building2, User } from 'lucide-react';
+import { ArrowRight, Building2 } from 'lucide-react';
 
 interface EmployeeReassignDialogProps {
   open: boolean;
@@ -24,7 +24,7 @@ interface EmployeeReassignDialogProps {
 export function EmployeeReassignDialog({ open, onOpenChange, employee }: EmployeeReassignDialogProps) {
   const { toast } = useToast();
   const departments = getDepartments();
-  const profiles = getProfiles();
+  const employees = getEmployees();
   
   const [formData, setFormData] = useState({
     newDepartmentId: '',
@@ -35,7 +35,7 @@ export function EmployeeReassignDialog({ open, onOpenChange, employee }: Employe
   });
 
   // Filter potential managers (excluding the employee being reassigned)
-  const potentialManagers = profiles.filter(p => p.id !== employee?.id);
+  const potentialManagers = employees.filter(p => String(p.employee_id) !== employee?.id);
 
   const handleSubmit = () => {
     if (!formData.newDepartmentId && !formData.newManagerId) {
@@ -47,12 +47,12 @@ export function EmployeeReassignDialog({ open, onOpenChange, employee }: Employe
       return;
     }
 
-    const newDept = departments.find(d => d.id === formData.newDepartmentId);
-    const newManager = profiles.find(p => p.id === formData.newManagerId);
+    const newDept = departments.find(d => String(d.department_id) === formData.newDepartmentId);
+    const newManager = employees.find(p => String(p.employee_id) === formData.newManagerId);
 
     let description = `${employee?.name} has been reassigned`;
-    if (newDept) description += ` to ${newDept.name}`;
-    if (newManager) description += ` under ${newManager.firstName} ${newManager.lastName}`;
+    if (newDept) description += ` to ${newDept.department_name}`;
+    if (newManager) description += ` under ${newManager.first_name} ${newManager.last_name}`;
 
     toast({
       title: 'Employee Reassigned Successfully',
@@ -72,8 +72,8 @@ export function EmployeeReassignDialog({ open, onOpenChange, employee }: Employe
 
   if (!employee) return null;
 
-  const currentDept = departments.find(d => d.name === employee.currentDepartment);
-  const currentManager = profiles.find(p => `${p.firstName} ${p.lastName}` === employee.currentManager);
+  const currentDept = departments.find(d => d.department_name === employee.currentDepartment);
+  const currentManager = employees.find(p => `${p.first_name} ${p.last_name}` === employee.currentManager);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,7 +119,7 @@ export function EmployeeReassignDialog({ open, onOpenChange, employee }: Employe
               <p className="text-xs text-muted-foreground">New</p>
               <p className="text-sm font-medium">
                 {formData.newDepartmentId 
-                  ? departments.find(d => d.id === formData.newDepartmentId)?.name 
+                  ? departments.find(d => String(d.department_id) === formData.newDepartmentId)?.department_name 
                   : 'Select...'}
               </p>
             </div>
@@ -138,11 +138,11 @@ export function EmployeeReassignDialog({ open, onOpenChange, employee }: Employe
               <SelectContent>
                 {departments.map(dept => (
                   <SelectItem 
-                    key={dept.id} 
-                    value={dept.id}
-                    disabled={currentDept?.id === dept.id}
+                    key={dept.department_id} 
+                    value={String(dept.department_id)}
+                    disabled={currentDept?.department_id === dept.department_id}
                   >
-                    {dept.name} {currentDept?.id === dept.id && '(Current)'}
+                    {dept.department_name} {currentDept?.department_id === dept.department_id && '(Current)'}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -163,12 +163,12 @@ export function EmployeeReassignDialog({ open, onOpenChange, employee }: Employe
                 <SelectItem value="none">No Manager</SelectItem>
                 {potentialManagers.map(manager => (
                   <SelectItem 
-                    key={manager.id} 
-                    value={manager.id}
-                    disabled={currentManager?.id === manager.id}
+                    key={manager.employee_id} 
+                    value={String(manager.employee_id)}
+                    disabled={currentManager?.employee_id === manager.employee_id}
                   >
-                    {manager.firstName} {manager.lastName} 
-                    {currentManager?.id === manager.id && ' (Current)'}
+                    {manager.first_name} {manager.last_name} 
+                    {currentManager?.employee_id === manager.employee_id && ' (Current)'}
                   </SelectItem>
                 ))}
               </SelectContent>
