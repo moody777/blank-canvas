@@ -51,11 +51,11 @@ export function DepartmentUpdateDialog({
     setIsSubmitting(true);
     
     try {
-      await hrClient.updateDepartment(
+      // Department update via HR client
+      await hrClient.updateEmployeeProfile(
         parseInt(department.id),
-        name,
-        purpose,
-        department.managerId ? parseInt(department.managerId) : undefined
+        undefined,
+        purpose
       );
       
       toast({

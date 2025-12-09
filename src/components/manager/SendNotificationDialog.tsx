@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { getProfiles, getDepartments } from '@/lib/mockFunctions';
+import { getEmployees, getDepartments } from '@/lib/dataService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -19,7 +19,7 @@ interface SendNotificationDialogProps {
 
 export function SendNotificationDialog({ open, onOpenChange, teamMembers }: SendNotificationDialogProps) {
   const { toast } = useToast();
-  const profiles = getProfiles();
+  const employees = getEmployees();
   const departments = getDepartments();
   
   const [formData, setFormData] = useState({
@@ -30,11 +30,11 @@ export function SendNotificationDialog({ open, onOpenChange, teamMembers }: Send
     sendToAll: false,
   });
 
-  // Use provided team members or fallback to all profiles
-  const availableRecipients = teamMembers || profiles.map(p => ({
-    id: p.id,
-    name: `${p.firstName} ${p.lastName}`,
-    avatar: p.profileImage
+  // Use provided team members or fallback to all employees
+  const availableRecipients = teamMembers || employees.map(e => ({
+    id: String(e.employee_id),
+    name: `${e.first_name} ${e.last_name}`,
+    avatar: e.profile_image
   }));
 
   const handleRecipientToggle = (employeeId: string) => {

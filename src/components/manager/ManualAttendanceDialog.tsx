@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { mockRecordManualAttendance } from '@/lib/mockFunctions';
+import { managerClient } from '@/lib/client';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 
@@ -32,12 +32,12 @@ export function ManualAttendanceDialog({ open, onOpenChange, employeeId, employe
     }
 
     try {
-      await mockRecordManualAttendance(
-        employeeId.toString(), 
-        format(date, 'yyyy-MM-dd'), 
-        entryTime, 
-        exitTime || undefined, 
-        reason
+      await managerClient.recordManualAttendance(
+        employeeId,
+        date,
+        entryTime,
+        exitTime || undefined,
+        1 // recorded by manager ID would come from context
       );
       toast.success('Manual attendance recorded successfully');
       onOpenChange(false);

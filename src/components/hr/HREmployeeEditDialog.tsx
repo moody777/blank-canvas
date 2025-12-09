@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UpdateEmployeeInfo } from '@/lib/mockFunctions';
+import { hrClient } from '@/lib/client';
 import { Employee } from '@/types';
 import { Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface HREmployeeEditDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface HREmployeeEditDialogProps {
 }
 
 export default function HREmployeeEditDialog({ open, onOpenChange, employee }: HREmployeeEditDialogProps) {
+  const { toast } = useToast();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -31,38 +33,42 @@ export default function HREmployeeEditDialog({ open, onOpenChange, employee }: H
 
   useEffect(() => {
     if (employee) {
-      setFirstName(employee.firstName);
-      setLastName(employee.lastName);
-      setEmail(employee.email);
-      setPhone(employee.phone);
-      setAddress(employee.address);
+      setFirstName(employee.first_name || '');
+      setLastName(employee.last_name || '');
+      setEmail(employee.email || '');
+      setPhone(employee.phone || '');
+      setAddress(employee.address || '');
       setBiography(employee.biography || '');
-      setEmergencyContactName(employee.emergencyContactName);
-      setEmergencyContactPhone(employee.emergencyContactPhone);
-      setRelationship(employee.relationship);
-      setEmploymentStatus(employee.employmentStatus);
-      setAccountStatus(employee.accountStatus);
+      setEmergencyContactName(employee.emergency_contact_name || '');
+      setEmergencyContactPhone(employee.emergency_contact_phone || '');
+      setRelationship(employee.relationship || '');
+      setEmploymentStatus((employee.employment_status as any) || 'ACTIVE');
+      setAccountStatus((employee.account_status as any) || 'ACTIVE');
     }
   }, [employee]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!employee) return;
 
-    UpdateEmployeeInfo(employee.id, {
-      firstName,
-      lastName,
-      email,
-      phone,
-      address,
-      biography,
-      emergencyContactName,
-      emergencyContactPhone,
-      relationship,
-      employmentStatus,
-      accountStatus
-    });
+    try {
+      await hrClient.updateEmployeeProfile(
+        employee.employee_id!,
+        phone,
+        address
+      );
 
-    onOpenChange(false);
+      toast({
+        title: 'Success',
+        description: 'Employee profile updated successfully'
+      });
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update employee profile',
+        variant: 'destructive'
+      });
+    }
   };
 
   if (!employee) return null;
@@ -71,7 +77,7 @@ export default function HREmployeeEditDialog({ open, onOpenChange, employee }: H
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Employee Profile - {employee.firstName} {employee.lastName}</DialogTitle>
+          <DialogTitle>Edit Employee Profile - {employee.first_name} {employee.last_name}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="personal" className="space-y-4">
@@ -208,10 +214,10 @@ export default function HREmployeeEditDialog({ open, onOpenChange, employee }: H
             <div className="border rounded-lg p-4 bg-muted/50">
               <h4 className="font-semibold mb-2">Employee Information</h4>
               <div className="text-sm space-y-1">
-                <p>Employee ID: <span className="font-medium">{employee.id}</span></p>
-                <p>National ID: <span className="font-medium">{employee.nationalId}</span></p>
-                <p>Hire Date: <span className="font-medium">{new Date(employee.hireDate).toLocaleDateString()}</span></p>
-                <p>Profile Completion: <span className="font-medium">{employee.profileCompletion}%</span></p>
+                <p>Employee ID: <span className="font-medium">{employee.employee_id}</span></p>
+                <p>National ID: <span className="font-medium">{employee.national_id || 'N/A'}</span></p>
+                <p>Hire Date: <span className="font-medium">{employee.hire_date ? new Date(employee.hire_date).toLocaleDateString() : 'N/A'}</span></p>
+                <p>Profile Completion: <span className="font-medium">{employee.profile_completion || 0}%</span></p>
               </div>
             </div>
           </TabsContent>

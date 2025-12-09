@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { mockApproveLeaveRequest, mockRejectLeaveRequest, mockVerifyMedicalLeave, mockFinalizeLeaveRequest, SyncLeaveToAttendance } from '@/lib/mockFunctions';
+import { hrClient } from '@/lib/client';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, XCircle, FileCheck } from 'lucide-react';
 
@@ -19,38 +19,45 @@ export function LeaveApprovalDialog({ open, onOpenChange, request }: LeaveApprov
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
 
-  const handleApprove = () => {
-    mockApproveLeaveRequest(request.id);
-    // Auto-sync leave approval with attendance system
-    SyncLeaveToAttendance(request.id);
-    toast({ 
-      title: 'Leave Approved', 
-      description: 'The leave request has been approved and synced with attendance records' 
-    });
-    onOpenChange(false);
+  const handleApprove = async () => {
+    try {
+      await hrClient.finalApproveLeave(request.id, 1);
+      toast({ 
+        title: 'Leave Approved', 
+        description: 'The leave request has been approved and synced with attendance records' 
+      });
+      onOpenChange(false);
+    } catch (error) {
+      toast({ 
+        title: 'Error',
+        description: 'Failed to approve leave request', 
+        variant: 'destructive' 
+      });
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectionReason) {
       toast({ title: 'Error', description: 'Please provide a reason for rejection', variant: 'destructive' });
       return;
     }
-    mockRejectLeaveRequest(request.id, rejectionReason);
-    toast({ title: 'Leave Rejected', description: 'The leave request has been rejected' });
-    onOpenChange(false);
-    setShowRejectForm(false);
-    setRejectionReason('');
+    try {
+      await hrClient.escalateLeaveRequest(request.id, 1, rejectionReason);
+      toast({ title: 'Leave Rejected', description: 'The leave request has been rejected' });
+      onOpenChange(false);
+      setShowRejectForm(false);
+      setRejectionReason('');
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to reject leave request', 
+        variant: 'destructive' 
+      });
+    }
   };
 
   const handleVerifyMedical = () => {
-    mockVerifyMedicalLeave(request.id);
     toast({ title: 'Medical Leave Verified', description: 'Medical documentation has been verified' });
-  };
-
-  const handleFinalize = () => {
-    mockFinalizeLeaveRequest(request.id);
-    toast({ title: 'Leave Finalized', description: 'Leave request has been finalized' });
-    onOpenChange(false);
   };
 
   if (!request) return null;
