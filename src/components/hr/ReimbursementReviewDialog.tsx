@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { mockReviewReimbursement } from '@/lib/mockFunctions';
+import { hrClient } from '@/lib/client';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, XCircle, DollarSign } from 'lucide-react';
 
@@ -19,20 +19,28 @@ export function ReimbursementReviewDialog({ open, onOpenChange, reimbursement }:
   const [notes, setNotes] = useState('');
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (action === 'reject' && !notes) {
       toast({ title: 'Error', description: 'Please provide a reason for rejection', variant: 'destructive' });
       return;
     }
 
-    mockReviewReimbursement(reimbursement.id, action!, notes);
-    toast({ 
-      title: action === 'approve' ? 'Reimbursement Approved' : 'Reimbursement Rejected',
-      description: `The reimbursement claim has been ${action}d`
-    });
-    onOpenChange(false);
-    setNotes('');
-    setAction(null);
+    try {
+      await hrClient.reviewReimbursement(reimbursement.id, 1, action === 'approve' ? 'APPROVED' : 'REJECTED');
+      toast({ 
+        title: action === 'approve' ? 'Reimbursement Approved' : 'Reimbursement Rejected',
+        description: `The reimbursement claim has been ${action}d`
+      });
+      onOpenChange(false);
+      setNotes('');
+      setAction(null);
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to process reimbursement', 
+        variant: 'destructive' 
+      });
+    }
   };
 
   if (!reimbursement) return null;
@@ -59,7 +67,7 @@ export function ReimbursementReviewDialog({ open, onOpenChange, reimbursement }:
             </div>
             <div className="space-y-2">
               <Label>Amount</Label>
-              <p className="text-lg font-bold">${reimbursement.amount.toFixed(2)}</p>
+              <p className="text-lg font-bold">${reimbursement.amount?.toFixed(2) || '0.00'}</p>
             </div>
           </div>
 

@@ -1,14 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Shield } from 'lucide-react';
+import { Shield, Users, Clock, FileText, DollarSign, Settings } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { getPermissions } from '@/lib/mockFunctions';
-// Permission type is defined inline in mockData
+
 type Permission = {
   id: string;
   name: string;
@@ -16,6 +15,19 @@ type Permission = {
   category: string;
   icon?: any;
 };
+
+// Default permissions list
+const defaultPermissions: Permission[] = [
+  { id: 'view_employees', name: 'View Employees', description: 'Can view employee profiles', category: 'Employee Management', icon: Users },
+  { id: 'edit_employees', name: 'Edit Employees', description: 'Can edit employee information', category: 'Employee Management', icon: Users },
+  { id: 'view_attendance', name: 'View Attendance', description: 'Can view attendance records', category: 'Attendance', icon: Clock },
+  { id: 'edit_attendance', name: 'Edit Attendance', description: 'Can modify attendance records', category: 'Attendance', icon: Clock },
+  { id: 'view_leave', name: 'View Leave', description: 'Can view leave requests', category: 'Leave Management', icon: FileText },
+  { id: 'approve_leave', name: 'Approve Leave', description: 'Can approve/reject leave requests', category: 'Leave Management', icon: FileText },
+  { id: 'view_payroll', name: 'View Payroll', description: 'Can view payroll information', category: 'Payroll', icon: DollarSign },
+  { id: 'process_payroll', name: 'Process Payroll', description: 'Can process payroll', category: 'Payroll', icon: DollarSign },
+  { id: 'system_settings', name: 'System Settings', description: 'Can modify system settings', category: 'Administration', icon: Settings },
+];
 
 interface ManageRolePermissionsDialogProps {
   open: boolean;
@@ -34,22 +46,17 @@ export function ManageRolePermissionsDialog({
   role,
   onPermissionsUpdated 
 }: ManageRolePermissionsDialogProps) {
-  const permissions = getPermissions();
-  const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(
-    new Set(role?.permissions || [])
-  );
-  const [initialPermissions, setInitialPermissions] = useState<Set<string>>(
-    new Set(role?.permissions || [])
-  );
+  const permissions = defaultPermissions;
+  const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
+  const [initialPermissions, setInitialPermissions] = useState<Set<string>>(new Set());
 
-  // Update permissions when role changes
-  useState(() => {
+  useEffect(() => {
     if (role) {
       const newPerms = new Set(role.permissions);
       setSelectedPermissions(newPerms);
       setInitialPermissions(newPerms);
     }
-  });
+  }, [role]);
 
   const togglePermission = (permissionId: string) => {
     const newPermissions = new Set(selectedPermissions);
@@ -62,7 +69,6 @@ export function ManageRolePermissionsDialog({
   };
 
   const handleSubmit = () => {
-    // Calculate what changed
     const added = Array.from(selectedPermissions).filter(p => !initialPermissions.has(p));
     const removed = Array.from(initialPermissions).filter(p => !selectedPermissions.has(p));
     
@@ -110,7 +116,7 @@ export function ManageRolePermissionsDialog({
 
         <ScrollArea className="h-[500px] pr-4">
           <div className="space-y-6 py-4">
-            {Object.entries(groupedPermissions as Record<string, Permission[]>).map(([category, perms]) => {
+            {Object.entries(groupedPermissions).map(([category, perms]) => {
               const Icon = perms[0].icon;
               return (
                 <div key={category} className="space-y-3">

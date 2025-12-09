@@ -32,6 +32,8 @@ export function MissionApprovalDialog({
   const handleSubmit = () => {
     if (!mission) return;
 
+    const missionId = String(mission.mission_id);
+
     if (action === 'reject' && !notes.trim()) {
       toast({
         title: 'Rejection Reason Required',
@@ -42,13 +44,13 @@ export function MissionApprovalDialog({
     }
 
     if (action === 'approve') {
-      onApprove(mission.id, notes);
+      onApprove(missionId, notes);
       toast({
         title: 'Mission Approved',
         description: `Mission to ${mission.destination} has been approved.`,
       });
     } else if (action === 'reject') {
-      onReject(mission.id, notes);
+      onReject(missionId, notes);
       toast({
         title: 'Mission Rejected',
         description: `Mission to ${mission.destination} has been rejected.`,
@@ -83,7 +85,7 @@ export function MissionApprovalDialog({
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">
-                {new Date(mission.startDate).toLocaleDateString()} - {new Date(mission.endDate).toLocaleDateString()}
+                {mission.start_date ? new Date(mission.start_date).toLocaleDateString() : 'N/A'} - {mission.end_date ? new Date(mission.end_date).toLocaleDateString() : 'N/A'}
               </span>
             </div>
             
